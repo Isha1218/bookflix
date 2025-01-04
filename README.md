@@ -1,4 +1,4 @@
-![Book Flix App Icon](https://drive.google.com/file/d/144IzqGgnqgUmb4EiAC4_yOgUaZx35naH/view?usp=sharing)
+![Book Flix App Icon](https://drive.google.com/uc?export=view&id=144IzqGgnqgUmb4EiAC4_yOgUaZx35naH)
 
 
 **Book Flix**
