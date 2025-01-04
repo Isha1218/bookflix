@@ -1,12 +1,12 @@
-****Book Flix****
+#**Book Flix**
 
 Book Flix is an app that provides book recommendations to users based on the previous reads and book ratings. This makes finding your next read quick and easy, as opposed to scrolling for hours on Goodreads.
 
-****Code****
+#**Code**
 
 Book Flix uses Dart programming language and the Flutter framework as the frontend. Python (through integration with Flask)  was used as the backend. Firebase Firestore was the database used and Firebase Authentication was the authentication provider used for users to sign in or create an account. The following packages were used
 
-***Dart Packages***
+##**Dart Packages**
 
 
 
@@ -23,7 +23,7 @@ Book Flix uses Dart programming language and the Flutter framework as the fronte
 * [share_plus](https://pub.dev/packages/share_plus): Shares content from app to other platforms
 * [flutter_dotenv](https://pub.dev/packages/flutter_dotenv): Loads sensitive API keys and tokens at runtime from a .env file which can be used throughout the application.
 
-***Python Libraries***
+##**Python Libraries**
 
 
 
@@ -36,7 +36,7 @@ Book Flix uses Dart programming language and the Flutter framework as the fronte
 * [scipy](https://scipy.org/): Constructed a sparse matrix
 * [json](https://docs.python.org/3/library/json.html): Converts dataframe to json data
 
-***Data***
+##**Data**
 
 A link to the data can be found here (they aren’t available in this repo because their file sizes were too large):  [https://www.kaggle.com/datasets/ishitamundra/bookflix-data/settings](https://www.kaggle.com/datasets/ishitamundra/bookflix-data/settings) 
 
@@ -69,7 +69,7 @@ Two csv files were important to this project:
     * ‘embedding’: Embeddings of the description column calculated by the Sentence2Vec algorithm to determine text similarity
     * ‘main_genre’: first genre in the list of genres book falls under
 
-****Demo****
+#**Demo**
 
 Video here
 
