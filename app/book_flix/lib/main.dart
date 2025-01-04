@@ -1,4 +1,3 @@
-import 'package:book_flix/getting_started.dart';
 import 'package:book_flix/widget_tree.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
