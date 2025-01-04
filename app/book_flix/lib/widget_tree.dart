@@ -1,5 +1,4 @@
 import 'package:book_flix/auth.dart';
-import 'package:book_flix/database_functions.dart';
 import 'package:book_flix/getting_started.dart';
 import 'package:book_flix/load_data.dart';
 import 'package:book_flix/login_register.dart';
@@ -18,8 +17,6 @@ class WidgetTree extends StatefulWidget {
 }
 
 class _WidgetTreeState extends State<WidgetTree> {
-  DatabaseFunctions db = DatabaseFunctions();
-
   bool _isLoading = true;
   bool _hasData = false;
 

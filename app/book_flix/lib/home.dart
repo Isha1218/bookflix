@@ -1,6 +1,7 @@
 import 'package:book_flix/auth.dart';
 import 'package:book_flix/book_view.dart';
 import 'package:book_flix/database_functions.dart';
+import 'package:book_flix/widget_tree.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:book_flix/book.dart';
@@ -82,6 +83,11 @@ class _HomeState extends State<Home> {
                             PopupMenuItem(
                               onTap: () async {
                                 await Auth().signOut();
+                                Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) {
+                                    return WidgetTree();
+                                  },
+                                ));
                               },
                               child: Center(
                                   child: Text(

@@ -44,7 +44,7 @@ class _GettingStartedState extends State<GettingStarted> {
                 height: 60,
               ),
               Text(
-                'Let\'s start by getting to know more about you by telling us your favorite books and genres',
+                'Let\'s start by getting to know more about you by telling us your favorite genres',
                 style: GoogleFonts.ubuntu(
                   fontSize: 16,
                 ),

@@ -146,12 +146,6 @@ class _LoadDataState extends State<LoadData> {
         db.df_user_id.toString() +
         '&genreWeights=' +
         genreWeights.toString().replaceAll(' ', '_'));
-    print('http://' +
-        ipAddress +
-        ':5000/bookflix/home_books?query=' +
-        db.df_user_id.toString() +
-        '&genreWeights=' +
-        genreWeights.toString().replaceAll(' ', '_'));
 
     recBooks = {
       getTitle('first_genre', data): await generateBooks('first_genre', data),

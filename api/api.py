@@ -6,7 +6,6 @@ import re
 import numpy as np
 import ast
 from scipy.sparse import coo_matrix
-from sklearn.metrics.pairwise import cosine_similarity
 import json
 
 app = Flask(__name__)
@@ -31,7 +30,7 @@ def add_user_rating():
     new_book = pd.DataFrame([[user_id, book_id, rating]], columns=['user_id', 'book_id', 'rating'])
     users = pd.concat([users, new_book], ignore_index=True)
     
-    users.to_csv('api/new_users.csv', index=False)
+    users.to_csv('api/users.csv', index=False)
 
     return jsonify({'message': 'Book added successfully'}), 200
 
