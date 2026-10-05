@@ -1,89 +1,98 @@
 ![Book Flix App Icon](https://drive.google.com/uc?export=view&id=144IzqGgnqgUmb4EiAC4_yOgUaZx35naH)
 
-
 # Book Flix
 
-Book Flix is an app that provides book recommendations to users based on the previous reads and book ratings. This makes finding your next read quick and easy, as opposed to scrolling for hours on Goodreads.
+A Flutter app that recommends books based on what you've read and how you rated it. I built the mobile app, the Flask recommendation API, and the Firebase integration.
 
-# Code
+## What it does
 
-Book Flix uses Dart programming language and the Flutter framework as the frontend. Python (through integration with Flask)  was used as the backend. Firebase Firestore was the database used and Firebase Authentication was the authentication provider used for users to sign in or create an account. The following packages were used
+- **Personalized home feed:** recommendations from user-based collaborative filtering, grouped into rows (your top 3 genres, new, popular, most liked, series).
+- **Similar books:** each book page shows the 5 closest books by description embedding.
+- **Reading tracker:** shelve books for later, track page progress, then mark finished or did-not-finish with a 1-5 rating. Ratings feed back into recommendations.
+- **Search and filter:** search by title, author, or series, and filter by genre.
 
-## Dart Packages 
+[Demo video](https://drive.google.com/file/d/19B25kfb0lis11TT9PuT5cbyva8mGCuP2/view?usp=sharing)
 
+## Tech stack
 
+- **Mobile app:** Flutter / Dart, `http`, `flutter_dotenv`, `palette_generator` (cover-based colors), `share_plus`
+- **Backend:** Python, Flask
+- **Recommendation / search:** pandas, NumPy, SciPy sparse matrices, scikit-learn (cosine similarity, TF-IDF)
+- **Auth and user data:** Firebase Authentication (email/password), Cloud Firestore
+- **Data:** [Goodreads dataset](https://mengtingwan.github.io/data/goodreads.html) (UCSD, 2017), cleaned into `books.csv` and `users.csv`
 
-* [http](https://pub.dev/packages/http): Used to make requests to the Flask API.
-* [google_fonts](https://pub.dev/packages/google_fonts): Changes the default font family of the app to a Google Font.
-* [palette_generator](https://pub.dev/packages/palette_generator): Extracts prominent colors from an image.
-* [simple_shadow](https://pub.dev/packages/simple_shadow): Adds a shadow for any widget in Flutter.
-* [firebase_auth](https://pub.dev/packages/firebase_auth): Authenticates user using email and password.
-* [firebase_core](https://pub.dev/packages/firebase_core): Enables connecting to multiple Firebase apps.
-* [cloud_firestore](https://pub.dev/packages/cloud_firestore): Allows for access to the Firestore database in order to access users and progress on their books
-* [sliding_clipped_nav_bar](https://pub.dev/packages/sliding_clipped_nav_bar): Bottom navigation bar to switch between main screens
-* [flutter_rating](https://pub.dev/packages/flutter_rating): Rating system for users to rate the books they have finished reading
-* [flutter_launcher_icons](https://pub.dev/packages/flutter_launcher_icons): Sets app icon
-* [share_plus](https://pub.dev/packages/share_plus): Shares content from app to other platforms
-* [flutter_dotenv](https://pub.dev/packages/flutter_dotenv): Loads sensitive API keys and tokens at runtime from a .env file which can be used throughout the application.
+## Architecture
 
-## Python Libraries
+The Flutter app talks to two backends. Firebase handles login and stores each user's reading state (shelves, progress, ratings, genre weights). The Flask API holds the book catalog and the full ratings table in memory as pandas DataFrames and does all ranking and search.
 
+```mermaid
+flowchart LR
+    App[Flutter app] -- email/password --> Auth[Firebase Auth]
+    App -- shelves, progress,<br/>ratings, genre weights --> FS[(Cloud Firestore)]
+    App -- HTTP / JSON --> API[Flask API]
+    API --> Books[(books.csv<br/>catalog + embeddings)]
+    API <--> Users[(users.csv<br/>user, book, rating)]
+```
 
+**Linking the two:** on first sign-in, the app asks the API for the next free `user_id` and saves it in the user's Firestore doc. When the user rates a book, the app writes it to Firestore and also POSTs it to `/bookflix/add_user_rating`, which appends it to `users.csv`. That puts the new user in the same ratings matrix as the Goodreads users.
 
-* [flask](https://flask.palletsprojects.com/en/stable/): Used to integrate Flutter with Python as the backend
-* [pandas](https://pandas.pydata.org/): Enabled manipulation of the books and users dataframes
-* [sklearn](https://scikit-learn.org/stable/): Used to compute TF-IDF and cosine similarity
-* [regex](https://docs.python.org/3/library/re.html): Formed search pattern
-* [numpy](https://numpy.org/): Used when handling matrices
-* [ast](https://docs.python.org/3/library/ast.html): Converted a String version of a list to a list data type
-* [scipy](https://scipy.org/): Constructed a sparse matrix
-* [json](https://docs.python.org/3/library/json.html): Converts dataframe to json data
+**Recommendations (`/bookflix/home_books`):**
 
-## Data
+1. Find other users who rated at least 1/5 as many of the same books as the current user.
+2. Build a sparse user x book ratings matrix (SciPy CSR) from those users.
+3. Take the 30 most similar users by cosine similarity.
+4. Score each book they rated: `mean_rating * count^2 / goodreads_avg_rating`, then multiply by the user's weight for that book's main genre (set in Settings).
+5. Drop books the user has already read, then slice the ranked list into the home-screen rows and sample 20 per row so the feed changes between loads.
 
-A link to the data can be found here (they aren’t available in this repo because their file sizes were too large):  [https://www.kaggle.com/datasets/ishitamundra/bookflix-data/settings](https://www.kaggle.com/datasets/ishitamundra/bookflix-data/settings) 
+New users with no ratings get the same scoring over all users (a popularity baseline), still adjusted by genre weights.
 
-The original source of the data can be found here: [https://mengtingwan.github.io/data/goodreads.html](https://mengtingwan.github.io/data/goodreads.html) 
+**Similar books (`/bookflix/similar_books`):** cosine similarity between Sentence2Vec embeddings of each book's description, precomputed and stored in `books.csv`.
 
-The data was collected from goodreads.com in 2017 using the Good Reads API (now deprecated).
+**Search (`/bookflix/search`):** queries under 5 characters use prefix/substring matching on title, author, and series. Longer queries use separate TF-IDF vectors per field, a weighted sum of cosine scores, and a 0.25 threshold.
 
-Two csv files were important to this project:
+## Project structure
 
+```
+api/
+  api.py                 Flask API: recommendations, similar books, search, ratings
+app/book_flix/
+  pubspec.yaml
+  assets/                logo and onboarding images
+  lib/
+    main.dart            init Firebase + .env
+    widget_tree.dart     routes to login, onboarding, or app based on auth state
+    getting_started.dart onboarding: assigns user_id, seeds genre weights
+    load_data.dart       loads shelves and recommendations before showing tabs
+    tab_bar.dart         Home / Shelf / Search / Settings
+    home.dart            recommendation rows
+    book_view.dart       book detail, progress, rating, similar books, share
+    shelf.dart           reading lists
+    search.dart          search and genre filters
+    settings.dart        edit genre weights
+    database_functions.dart  Firestore reads/writes
+```
 
+## Getting started
 
-* users.csv: 
-    * ‘user_id’: a unique id given to each user
-    * ‘book_id’: a unique id given to each book corresponding to the book ids in books.csv
-    * ‘rating’: the numerical rating that book received (from 1-5)
-* books.csv:
-    * ‘book_id’: a unique id given to each book corresponding to the book ids in users.csv
-    * ‘title’: title of the book
-    * ‘series’: name of the series book is a part of and a number indicating the position of the book in the series
-    * ‘author’: main author of the book
-    * ‘description’: short summary of the book
-    * ‘genres’: a list of genres the book falls under
-    * ‘publication_year’: year the book was published in
-    * ‘average_rating': the average rating out of 5 in Good Reads
-    * ‘ratings_count’: the number of ratings the book received in Good Reads
-    * ‘image_url’: the url of the cover image of the book
-    * ‘mod_title’: title stripped of unnecessary characters
-    * ‘mod_author’: author stripped of unnecessary characters
-    * ‘mod_series’: series name that book is a part stripped of unnecessary characters
-    * ‘embedding’: Embeddings of the description column calculated by the Sentence2Vec algorithm to determine text similarity
-    * ‘main_genre’: first genre in the list of genres book falls under
+**Data:** download `books.csv` and `users.csv` from [Kaggle](https://www.kaggle.com/datasets/ishitamundra/bookflix-data) (too large for the repo) and put them in `api/`.
 
-# Demo
+**API** (run from the repo root, since the CSV paths are relative to it):
 
-[Click on this link to watch a demo of Book Flix.](https://drive.google.com/file/d/19B25kfb0lis11TT9PuT5cbyva8mGCuP2/view?usp=sharing)
+```bash
+pip install flask pandas numpy scipy scikit-learn
+python api/api.py        # serves on 0.0.0.0:5000
+```
 
-# Features
+**App:**
 
-
-
-* Book recommendation: Recommendations are determined using collaborative filtering, which uses data from the current user and all the other users. Users who have similar ratings to the current user are likely to have similar tastes in books. Thus, similar users are identified and books rated highly by these users are suggested to the current user. The current user’s genre preferences (which act as weights) are further used to provide recommendations (can be edited on the settings tab).
-* Book progress tracker: Books that the user is currently reading, finished, did not finish, and is on a user’s list are tracked. The user has the ability to update their progress along the way.
-* Filter/search for books: Users have the ability to search for books by name, series name, or author. They additionally can filter books by genre, offering them a wide selection of books to browse through.
-
-# Support
-
-If any help is needed while navigating through the app, please contact: [ishita.mundra@gmail.com](mailto:ishita.mundra@gmail.com).
+1. Create a Firebase project with Email/Password auth and Firestore, then add the platform config files (`google-services.json` for Android, `GoogleService-Info.plist` for iOS).
+2. Create `app/book_flix/.env` with the API host's IP:
+   ```
+   IP_ADDRESS=<your machine's local IP>
+   ```
+3. Run:
+   ```bash
+   cd app/book_flix
+   flutter pub get
+   flutter run
+   ```
